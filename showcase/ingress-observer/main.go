@@ -10,9 +10,9 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/client-go/rest"
 
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/logger"
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/models"
 	"github.com/sirupsen/logrus"
+	"github.com/wantedly/oauth2-proxy-manager/logger"
+	"github.com/wantedly/oauth2-proxy-manager/models"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
 	"k8s.io/apimachinery/pkg/fields"

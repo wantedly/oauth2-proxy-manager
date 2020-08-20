@@ -1,5 +1,5 @@
 FROM golang:1.12.6 AS build
-WORKDIR /go/src/github.com/Laica-Lunasys/oauth2-proxy-manager
+WORKDIR /go/src/github.com/wantedly/oauth2-proxy-manager
 
 ENV GOOS linux
 ENV CGO_ENABLED 0
@@ -15,6 +15,6 @@ FROM alpine
 WORKDIR /app
 
 EXPOSE 8080
-COPY --from=build /go/src/github.com/Laica-Lunasys/oauth2-proxy-manager/oauth2-proxy-manager /app/
+COPY --from=build /go/src/github.com/wantedly/oauth2-proxy-manager/oauth2-proxy-manager /app/
 
 ENTRYPOINT ["/app/oauth2-proxy-manager"]

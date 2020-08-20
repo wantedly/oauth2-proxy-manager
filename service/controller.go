@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -275,13 +275,13 @@ func (c *Controller) applyConfigMap(settings *models.ServiceSettings) {
 }
 
 func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
-	deploymentsClient := c.Clientset.AppsV1beta2().Deployments("oauth2-proxy")
-	deployment := &appsv1beta2.Deployment{
+	deploymentsClient := c.Clientset.AppsV1().Deployments("oauth2-proxy")
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName),
 			Namespace: "oauth2-proxy",
 		},
-		Spec: appsv1beta2.DeploymentSpec{
+		Spec: appsv1.DeploymentSpec{
 			Replicas: int32Ptr(1),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{

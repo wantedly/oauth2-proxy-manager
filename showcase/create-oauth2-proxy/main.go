@@ -14,9 +14,9 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/logger"
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/models"
 	"github.com/sirupsen/logrus"
+	"github.com/wantedly/oauth2-proxy-manager/logger"
+	"github.com/wantedly/oauth2-proxy-manager/models"
 	"k8s.io/client-go/kubernetes"
 )
 

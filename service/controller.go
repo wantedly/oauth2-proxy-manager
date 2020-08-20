@@ -13,8 +13,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/models"
 	"github.com/sirupsen/logrus"
+	"github.com/wantedly/oauth2-proxy-manager/models"
 	"k8s.io/client-go/kubernetes"
 )
 

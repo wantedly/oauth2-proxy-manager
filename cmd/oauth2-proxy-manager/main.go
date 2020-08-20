@@ -3,9 +3,9 @@ package main
 import (
 	"os"
 
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/logger"
-	"github.com/Laica-Lunasys/oauth2-proxy-manager/service"
 	"github.com/sirupsen/logrus"
+	"github.com/wantedly/oauth2-proxy-manager/logger"
+	"github.com/wantedly/oauth2-proxy-manager/service"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"

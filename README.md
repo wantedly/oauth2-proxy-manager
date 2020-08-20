@@ -4,7 +4,7 @@ oauth2-proxy-manager
 
 Docker image
 ==============================
-`gcr.io/laica-lunasys/oauth2-proxy-manager:latest`
+`quay.io/wantedly/oauth2-proxy-manager:latest`
 
 
 Setup

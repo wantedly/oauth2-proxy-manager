@@ -108,7 +108,8 @@ func (c *Controller) applyService(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Creating Service...")
 		result, err = servicesClient.Create(service)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Created Service! %q", result.GetObjectMeta().GetName())
 	} else {
@@ -123,7 +124,8 @@ func (c *Controller) applyService(settings *models.ServiceSettings) {
 		service.SetResourceVersion(result.GetResourceVersion())
 		result, err = servicesClient.Update(service)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Updated Service! %q", result.GetObjectMeta().GetName())
 	}
@@ -182,7 +184,8 @@ func (c *Controller) applyIngress(settings *models.ServiceSettings) {
 
 		result, err = ingressClient.Create(ingress)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Created Ingress! %q", result.GetObjectMeta().GetName())
 	} else {
@@ -197,7 +200,8 @@ func (c *Controller) applyIngress(settings *models.ServiceSettings) {
 
 		result, err = ingressClient.Update(ingress)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Updated Ingress! %q", result.GetObjectMeta().GetName())
 	}
@@ -230,14 +234,16 @@ func (c *Controller) applySecret(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Creating Secret...")
 		result, err = secretClient.Create(secret)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Created Secret! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update Secret...")
 		result, err = secretClient.Update(secret)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Updated Secret! %q", result.GetObjectMeta().GetName())
 	}
@@ -261,14 +267,16 @@ func (c *Controller) applyConfigMap(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Creating ConfigMap...")
 		result, err = configMapClient.Create(configMap)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Created ConfigMap! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update ConfigMap...")
 		result, err = configMapClient.Update(configMap)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Updated ConfigMap! %q", result.GetObjectMeta().GetName())
 	}
@@ -415,14 +423,16 @@ func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Creating Deployment...")
 		result, err = deploymentsClient.Create(deployment)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Created Deployment! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update Deployment...")
 		result, err = deploymentsClient.Update(deployment)
 		if err != nil {
-			logrus.Panic(err)
+			logrus.Error(err)
+			return
 		}
 		logrus.Printf("[oauth2_proxy] Updated Deployment! %q", result.GetObjectMeta().GetName())
 	}

@@ -153,8 +153,12 @@ func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceS
 								networkingv1.HTTPIngressPath{
 									Path: fmt.Sprintf("/github/%s", settings.AppName),
 									Backend: networkingv1.IngressBackend{
-										ServiceName: fmt.Sprintf("oauth2-proxy-%s-%s-%s", c.Env.Provider, settings.GitHub.Organization, settings.AppName),
-										ServicePort: intstr.FromInt(80),
+										Service: &networkingv1.IngressServiceBackend{
+											Name: fmt.Sprintf("oauth2-proxy-%s-%s-%s", c.Env.Provider, settings.GitHub.Organization, settings.AppName),
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},

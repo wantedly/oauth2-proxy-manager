@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -30,7 +31,7 @@ func NewObserver(clientset *kubernetes.Clientset, controller *Controller) (*Obse
 	return observer, nil
 }
 
-func (ob *Observer) Run() {
+func (ob *Observer) Run(ctx context.Context) {
 	logrus.Info("[Observer] Observing Ingress...")
 
 	// create resource watcher (ingress)
@@ -45,7 +46,7 @@ func (ob *Observer) Run() {
 
 				settings, err := parseAnnotations(meta)
 				if err == nil {
-					ob.Controller.Apply(settings)
+					ob.Controller.Apply(ctx, settings)
 					//logrus.WithField("settings", settings).Info("Dummy: Update Deployment / ConfigMap / Service / Secret / Ingress")
 				}
 			}
@@ -59,7 +60,7 @@ func (ob *Observer) Run() {
 
 				settings, err := parseAnnotations(meta)
 				if err == nil {
-					ob.Controller.Apply(settings)
+					ob.Controller.Apply(ctx, settings)
 					logrus.WithField("settings", settings).Info("Dummy: Update Deployment / ConfigMap / Service / Secret / Ingress")
 				}
 			}

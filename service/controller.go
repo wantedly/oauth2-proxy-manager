@@ -9,14 +9,14 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wantedly/oauth2-proxy-manager/models"
-	"k8s.io/client-go/kubernetes"
 )
 
 type Controller struct {
@@ -134,8 +134,8 @@ func (c *Controller) applyService(ctx context.Context, settings *models.ServiceS
 }
 
 func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceSettings) {
-	ingressClient := c.Clientset.ExtensionsV1beta1().Ingresses("oauth2-proxy")
-	ingress := &extensionsv1beta1.Ingress{
+	ingressClient := c.Clientset.NetworkingV1().Ingresses("oauth2-proxy")
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "oauth2-proxy",
 			Namespace: "oauth2-proxy",
@@ -143,16 +143,16 @@ func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceS
 				"kubernetes.io/ingress.class": "nginx",
 			},
 		},
-		Spec: extensionsv1beta1.IngressSpec{
-			Rules: []extensionsv1beta1.IngressRule{
-				extensionsv1beta1.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				networkingv1.IngressRule{
 					Host: c.Env.Domain,
-					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
-						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
-							Paths: []extensionsv1beta1.HTTPIngressPath{
-								extensionsv1beta1.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								networkingv1.HTTPIngressPath{
 									Path: fmt.Sprintf("/github/%s", settings.AppName),
-									Backend: extensionsv1beta1.IngressBackend{
+									Backend: networkingv1.IngressBackend{
 										ServiceName: fmt.Sprintf("oauth2-proxy-%s-%s-%s", c.Env.Provider, settings.GitHub.Organization, settings.AppName),
 										ServicePort: intstr.FromInt(80),
 									},
@@ -170,8 +170,8 @@ func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceS
 	}
 
 	if len(c.Ingress.TLSHosts) != 0 && len(c.Ingress.TLSSecretName) != 0 {
-		ingress.Spec.TLS = []extensionsv1beta1.IngressTLS{
-			extensionsv1beta1.IngressTLS{
+		ingress.Spec.TLS = []networkingv1.IngressTLS{
+			networkingv1.IngressTLS{
 				Hosts:      strings.Split(c.Ingress.TLSHosts, ","),
 				SecretName: c.Ingress.TLSSecretName,
 			},

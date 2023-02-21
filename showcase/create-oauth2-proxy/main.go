@@ -8,7 +8,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
-	extensionsv1beta1 "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -170,24 +170,28 @@ func (o *OAuth2Proxy) applyService(ctx context.Context) {
 }
 
 func (o *OAuth2Proxy) applyIngress(ctx context.Context) {
-	ingressClient := o.Clientset.ExtensionsV1beta1().Ingresses("oauth2-proxy")
-	ingress := &extensionsv1beta1.Ingress{
+	ingressClient := o.Clientset.NetworkingV1().Ingresses("oauth2-proxy")
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "oauth2-proxy",
 			Namespace: "oauth2-proxy",
 		},
-		Spec: extensionsv1beta1.IngressSpec{
-			Rules: []extensionsv1beta1.IngressRule{
-				extensionsv1beta1.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
+				networkingv1.IngressRule{
 					Host: o.Env.Domain,
-					IngressRuleValue: extensionsv1beta1.IngressRuleValue{
-						HTTP: &extensionsv1beta1.HTTPIngressRuleValue{
-							Paths: []extensionsv1beta1.HTTPIngressPath{
-								extensionsv1beta1.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
+								networkingv1.HTTPIngressPath{
 									Path: fmt.Sprintf("/github/%s", o.Settings.AppName),
-									Backend: extensionsv1beta1.IngressBackend{
-										ServiceName: fmt.Sprintf("oauth2-proxy-%s-%s-%s", o.Env.Provider, o.Settings.GitHub.Organization, o.Settings.AppName),
-										ServicePort: intstr.FromInt(80),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: fmt.Sprintf("oauth2-proxy-%s-%s-%s", o.Env.Provider, o.Settings.GitHub.Organization, o.Settings.AppName),
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -199,8 +203,8 @@ func (o *OAuth2Proxy) applyIngress(ctx context.Context) {
 	}
 
 	if len(o.Ingress.TLSHosts) != 0 && len(o.Ingress.TLSSecretName) != 0 {
-		ingress.Spec.TLS = []extensionsv1beta1.IngressTLS{
-			extensionsv1beta1.IngressTLS{
+		ingress.Spec.TLS = []networkingv1.IngressTLS{
+			networkingv1.IngressTLS{
 				Hosts:      strings.Split(o.Ingress.TLSHosts, ","),
 				SecretName: o.Ingress.TLSSecretName,
 			},

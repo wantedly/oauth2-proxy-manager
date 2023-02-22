@@ -13,7 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/wantedly/oauth2-proxy-manager/models"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/tools/cache"
 )
@@ -35,13 +35,13 @@ func (ob *Observer) Run(ctx context.Context) {
 	logrus.Info("[Observer] Observing Ingress...")
 
 	// create resource watcher (ingress)
-	watcher := cache.NewListWatchFromClient(ob.Clientset.ExtensionsV1beta1().RESTClient(), "ingresses", v1.NamespaceAll, fields.Everything())
+	watcher := cache.NewListWatchFromClient(ob.Clientset.NetworkingV1().RESTClient(), "ingresses", v1.NamespaceAll, fields.Everything())
 
-	_, controller := cache.NewInformer(watcher, &v1beta1.Ingress{}, 0, cache.ResourceEventHandlerFuncs{
+	_, controller := cache.NewInformer(watcher, &networkingv1.Ingress{}, 0, cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
-				meta := obj.(*v1beta1.Ingress).ObjectMeta
+				meta := obj.(*networkingv1.Ingress).ObjectMeta
 				logrus.Infof("[Informer] Added Ingress %s", key)
 
 				settings, err := parseAnnotations(meta)
@@ -55,7 +55,7 @@ func (ob *Observer) Run(ctx context.Context) {
 			key, err := cache.MetaNamespaceKeyFunc(new)
 
 			if err == nil {
-				meta := new.(*v1beta1.Ingress).ObjectMeta
+				meta := new.(*networkingv1.Ingress).ObjectMeta
 				logrus.Infof("[Informer] Update Ingress %s", key)
 
 				settings, err := parseAnnotations(meta)
@@ -68,7 +68,7 @@ func (ob *Observer) Run(ctx context.Context) {
 		DeleteFunc: func(obj interface{}) {
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
-				meta := obj.(*v1beta1.Ingress).ObjectMeta
+				meta := obj.(*networkingv1.Ingress).ObjectMeta
 				logrus.Infof("[Informer] Delete Ingress: %s", key)
 
 				settings, err := parseAnnotations(meta)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -104,16 +105,17 @@ func main() {
 		logrus.Fatal(err)
 	}
 
+	ctx := context.Background()
 	o := makeOAuth2Proxy(clientset, settings)
-	o.applyService()
-	o.applySecret()
-	o.applyConfigMap()
-	o.applyDeployment()
-	o.applyIngress()
+	o.applyService(ctx)
+	o.applySecret(ctx)
+	o.applyConfigMap(ctx)
+	o.applyDeployment(ctx)
+	o.applyIngress(ctx)
 
 }
 
-func (o *OAuth2Proxy) applyService() {
+func (o *OAuth2Proxy) applyService(ctx context.Context) {
 	servicesClient := o.Clientset.CoreV1().Services("oauth2-proxy")
 	service := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -139,11 +141,11 @@ func (o *OAuth2Proxy) applyService() {
 		},
 	}
 	logrus.Printf("[oauth2_proxy] Check Service...")
-	result, err := servicesClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
+	result, err := servicesClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Service...")
-		result, err = servicesClient.Create(service)
+		result, err = servicesClient.Create(ctx, service, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -158,7 +160,7 @@ func (o *OAuth2Proxy) applyService() {
 		// Inject ResourceVersion
 		logrus.Debugf("[oauth2_proxy] Detected ResourceVersion: %s", result.GetResourceVersion())
 		service.SetResourceVersion(result.GetResourceVersion())
-		result, err = servicesClient.Update(service)
+		result, err = servicesClient.Update(ctx, service, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -167,7 +169,7 @@ func (o *OAuth2Proxy) applyService() {
 
 }
 
-func (o *OAuth2Proxy) applyIngress() {
+func (o *OAuth2Proxy) applyIngress(ctx context.Context) {
 	ingressClient := o.Clientset.ExtensionsV1beta1().Ingresses("oauth2-proxy")
 	ingress := &extensionsv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
@@ -205,12 +207,12 @@ func (o *OAuth2Proxy) applyIngress() {
 		}
 	}
 
-	result, err := ingressClient.Get("oauth2-proxy", metav1.GetOptions{})
+	result, err := ingressClient.Get(ctx, "oauth2-proxy", metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Ingress...")
 
-		result, err = ingressClient.Create(ingress)
+		result, err = ingressClient.Create(ctx, ingress, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -225,7 +227,7 @@ func (o *OAuth2Proxy) applyIngress() {
 			}
 		}
 
-		result, err = ingressClient.Update(ingress)
+		result, err = ingressClient.Update(ctx, ingress, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -233,7 +235,7 @@ func (o *OAuth2Proxy) applyIngress() {
 	}
 }
 
-func (o *OAuth2Proxy) applySecret() {
+func (o *OAuth2Proxy) applySecret(ctx context.Context) {
 	secretClient := o.Clientset.CoreV1().Secrets("oauth2-proxy")
 	secret := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
@@ -248,18 +250,18 @@ func (o *OAuth2Proxy) applySecret() {
 		},
 	}
 	logrus.Printf("[oauth2_proxy] Check Secret...")
-	result, err := secretClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
+	result, err := secretClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Secret...")
-		result, err = secretClient.Create(secret)
+		result, err = secretClient.Create(ctx, secret, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
 		logrus.Printf("[oauth2_proxy] Created Secret! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update Secret...")
-		result, err = secretClient.Update(secret)
+		result, err = secretClient.Update(ctx, secret, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -267,7 +269,7 @@ func (o *OAuth2Proxy) applySecret() {
 	}
 }
 
-func (o *OAuth2Proxy) applyConfigMap() {
+func (o *OAuth2Proxy) applyConfigMap(ctx context.Context) {
 	configMapClient := o.Clientset.CoreV1().ConfigMaps("oauth2-proxy")
 	configMap := &apiv1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -279,18 +281,18 @@ func (o *OAuth2Proxy) applyConfigMap() {
 		},
 	}
 	logrus.Printf("[oauth2_proxy] Check ConfigMap...")
-	result, err := configMapClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
+	result, err := configMapClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating ConfigMap...")
-		result, err = configMapClient.Create(configMap)
+		result, err = configMapClient.Create(ctx, configMap, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
 		logrus.Printf("[oauth2_proxy] Created ConfigMap! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update ConfigMap...")
-		result, err = configMapClient.Update(configMap)
+		result, err = configMapClient.Update(ctx, configMap, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
@@ -298,7 +300,7 @@ func (o *OAuth2Proxy) applyConfigMap() {
 	}
 }
 
-func (o *OAuth2Proxy) applyDeployment() {
+func (o *OAuth2Proxy) applyDeployment(ctx context.Context) {
 	deploymentsClient := o.Clientset.AppsV1().Deployments("oauth2-proxy")
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -382,7 +384,7 @@ func (o *OAuth2Proxy) applyDeployment() {
 							LivenessProbe: &apiv1.Probe{
 								InitialDelaySeconds: 0,
 								TimeoutSeconds:      1,
-								Handler: apiv1.Handler{
+								ProbeHandler: apiv1.ProbeHandler{
 									HTTPGet: &apiv1.HTTPGetAction{
 										Path: "/ping",
 										Port: intstr.FromString("http"),
@@ -394,7 +396,7 @@ func (o *OAuth2Proxy) applyDeployment() {
 								TimeoutSeconds:      1,
 								SuccessThreshold:    1,
 								PeriodSeconds:       10,
-								Handler: apiv1.Handler{
+								ProbeHandler: apiv1.ProbeHandler{
 									HTTPGet: &apiv1.HTTPGetAction{
 										Path: "/ping",
 										Port: intstr.FromString("http"),
@@ -429,18 +431,18 @@ func (o *OAuth2Proxy) applyDeployment() {
 
 	// Create deployment...
 	logrus.Printf("[oauth2_proxy] Check Deployment...")
-	result, err := deploymentsClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
+	result, err := deploymentsClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", o.Settings.GitHub.Organization, o.Settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Deployment...")
-		result, err = deploymentsClient.Create(deployment)
+		result, err = deploymentsClient.Create(ctx, deployment, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}
 		logrus.Printf("[oauth2_proxy] Created Deployment! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update Deployment...")
-		result, err = deploymentsClient.Update(deployment)
+		result, err = deploymentsClient.Update(ctx, deployment, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Panic(err)
 		}

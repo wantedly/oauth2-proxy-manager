@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -58,5 +59,5 @@ func main() {
 
 	// Observer
 	observer, err := service.NewObserver(clientset, controller)
-	observer.Run()
+	observer.Run(context.Background())
 }

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"os"
@@ -66,20 +67,20 @@ func NewController(clientset *kubernetes.Clientset) (*Controller, error) {
 	return c, nil
 }
 
-func (c *Controller) Apply(settings *models.ServiceSettings) {
+func (c *Controller) Apply(ctx context.Context, settings *models.ServiceSettings) {
 	logrus.Infof("[Controller] Applying oauth2_proxy(%s)...", settings.AppName)
-	c.applyService(settings)
-	c.applySecret(settings)
-	c.applyConfigMap(settings)
-	c.applyDeployment(settings)
-	c.applyIngress(settings)
+	c.applyService(ctx, settings)
+	c.applySecret(ctx, settings)
+	c.applyConfigMap(ctx, settings)
+	c.applyDeployment(ctx, settings)
+	c.applyIngress(ctx, settings)
 }
 
 func (c *Controller) Delete(settings *models.ServiceSettings) {
 	logrus.Infof("[Controller] Delete oauth2_proxy(%s)", settings.AppName)
 }
 
-func (c *Controller) applyService(settings *models.ServiceSettings) {
+func (c *Controller) applyService(ctx context.Context, settings *models.ServiceSettings) {
 	servicesClient := c.Clientset.CoreV1().Services("oauth2-proxy")
 	service := &apiv1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -102,11 +103,11 @@ func (c *Controller) applyService(settings *models.ServiceSettings) {
 		},
 	}
 	logrus.Printf("[oauth2_proxy] Check Service...")
-	result, err := servicesClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
+	result, err := servicesClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Service...")
-		result, err = servicesClient.Create(service)
+		result, err = servicesClient.Create(ctx, service, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -122,7 +123,7 @@ func (c *Controller) applyService(settings *models.ServiceSettings) {
 		// Inject ResourceVersion
 		logrus.Debugf("[oauth2_proxy] Detected ResourceVersion: %s", result.GetResourceVersion())
 		service.SetResourceVersion(result.GetResourceVersion())
-		result, err = servicesClient.Update(service)
+		result, err = servicesClient.Update(ctx, service, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -132,7 +133,7 @@ func (c *Controller) applyService(settings *models.ServiceSettings) {
 
 }
 
-func (c *Controller) applyIngress(settings *models.ServiceSettings) {
+func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceSettings) {
 	ingressClient := c.Clientset.ExtensionsV1beta1().Ingresses("oauth2-proxy")
 	ingress := &extensionsv1beta1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
@@ -177,12 +178,12 @@ func (c *Controller) applyIngress(settings *models.ServiceSettings) {
 		}
 	}
 
-	result, err := ingressClient.Get("oauth2-proxy", metav1.GetOptions{})
+	result, err := ingressClient.Get(ctx, "oauth2-proxy", metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Ingress...")
 
-		result, err = ingressClient.Create(ingress)
+		result, err = ingressClient.Create(ctx, ingress, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -198,7 +199,7 @@ func (c *Controller) applyIngress(settings *models.ServiceSettings) {
 			}
 		}
 
-		result, err = ingressClient.Update(ingress)
+		result, err = ingressClient.Update(ctx, ingress, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -207,7 +208,7 @@ func (c *Controller) applyIngress(settings *models.ServiceSettings) {
 	}
 }
 
-func (c *Controller) applySecret(settings *models.ServiceSettings) {
+func (c *Controller) applySecret(ctx context.Context, settings *models.ServiceSettings) {
 	secretClient := c.Clientset.CoreV1().Secrets("oauth2-proxy")
 	cookieSecret := fmt.Sprintf("%x", sha256.Sum256([]byte(
 		c.Env.Provider+
@@ -228,11 +229,11 @@ func (c *Controller) applySecret(settings *models.ServiceSettings) {
 		},
 	}
 	logrus.Printf("[oauth2_proxy] Check Secret...")
-	result, err := secretClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
+	result, err := secretClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Secret...")
-		result, err = secretClient.Create(secret)
+		result, err = secretClient.Create(ctx, secret, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -240,7 +241,7 @@ func (c *Controller) applySecret(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Created Secret! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update Secret...")
-		result, err = secretClient.Update(secret)
+		result, err = secretClient.Update(ctx, secret, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -249,7 +250,7 @@ func (c *Controller) applySecret(settings *models.ServiceSettings) {
 	}
 }
 
-func (c *Controller) applyConfigMap(settings *models.ServiceSettings) {
+func (c *Controller) applyConfigMap(ctx context.Context, settings *models.ServiceSettings) {
 	configMapClient := c.Clientset.CoreV1().ConfigMaps("oauth2-proxy")
 	configMap := &apiv1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
@@ -261,11 +262,11 @@ func (c *Controller) applyConfigMap(settings *models.ServiceSettings) {
 		},
 	}
 	logrus.Printf("[oauth2_proxy] Check ConfigMap...")
-	result, err := configMapClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
+	result, err := configMapClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating ConfigMap...")
-		result, err = configMapClient.Create(configMap)
+		result, err = configMapClient.Create(ctx, configMap, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -273,7 +274,7 @@ func (c *Controller) applyConfigMap(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Created ConfigMap! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update ConfigMap...")
-		result, err = configMapClient.Update(configMap)
+		result, err = configMapClient.Update(ctx, configMap, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -282,7 +283,7 @@ func (c *Controller) applyConfigMap(settings *models.ServiceSettings) {
 	}
 }
 
-func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
+func (c *Controller) applyDeployment(ctx context.Context, settings *models.ServiceSettings) {
 	deploymentsClient := c.Clientset.AppsV1().Deployments("oauth2-proxy")
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -370,7 +371,7 @@ func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
 							LivenessProbe: &apiv1.Probe{
 								InitialDelaySeconds: 0,
 								TimeoutSeconds:      1,
-								Handler: apiv1.Handler{
+								ProbeHandler: apiv1.ProbeHandler{
 									HTTPGet: &apiv1.HTTPGetAction{
 										Path: "/ping",
 										Port: intstr.FromString("http"),
@@ -382,7 +383,7 @@ func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
 								TimeoutSeconds:      1,
 								SuccessThreshold:    1,
 								PeriodSeconds:       10,
-								Handler: apiv1.Handler{
+								ProbeHandler: apiv1.ProbeHandler{
 									HTTPGet: &apiv1.HTTPGetAction{
 										Path: "/ping",
 										Port: intstr.FromString("http"),
@@ -417,11 +418,11 @@ func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
 
 	// Create deployment...
 	logrus.Printf("[oauth2_proxy] Check Deployment...")
-	result, err := deploymentsClient.Get(fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
+	result, err := deploymentsClient.Get(ctx, fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName), metav1.GetOptions{})
 	if len(result.GetName()) == 0 {
 		// NotFound
 		logrus.Printf("[oauth2_proxy] Creating Deployment...")
-		result, err = deploymentsClient.Create(deployment)
+		result, err = deploymentsClient.Create(ctx, deployment, metav1.CreateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return
@@ -429,7 +430,7 @@ func (c *Controller) applyDeployment(settings *models.ServiceSettings) {
 		logrus.Printf("[oauth2_proxy] Created Deployment! %q", result.GetObjectMeta().GetName())
 	} else {
 		logrus.Printf("[oauth2_proxy] Update Deployment...")
-		result, err = deploymentsClient.Update(deployment)
+		result, err = deploymentsClient.Update(ctx, deployment, metav1.UpdateOptions{})
 		if err != nil {
 			logrus.Error(err)
 			return

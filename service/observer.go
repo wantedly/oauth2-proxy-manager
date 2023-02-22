@@ -92,7 +92,7 @@ func parseAnnotations(meta metav1.ObjectMeta) (*models.ServiceSettings, error) {
 	// Check Annotations ---
 	if _, ok := meta.Annotations["kubernetes.io/ingress.class"]; !ok {
 		return nil, errors.New("ingress.class not found. skip.")
-	} else if meta.Annotations["kubernetes.io/ingress.class"] != "nginx" {
+	} else if meta.Annotations["kubernetes.io/ingress.class"] != "nginx" && meta.Annotations["kubernetes.io/ingress.class"] != "ingress-nginx" {
 		// or ingress.class is "nginx" ?
 		return nil, errors.New("ingress.class is not nginx. skip.")
 	}

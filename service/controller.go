@@ -135,6 +135,7 @@ func (c *Controller) applyService(ctx context.Context, settings *models.ServiceS
 
 func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceSettings) {
 	ingressClient := c.Clientset.NetworkingV1().Ingresses("oauth2-proxy")
+	pathTypeImplementationSpecific := networkingv1.PathTypeImplementationSpecific
 	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "oauth2-proxy",
@@ -151,7 +152,8 @@ func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceS
 						HTTP: &networkingv1.HTTPIngressRuleValue{
 							Paths: []networkingv1.HTTPIngressPath{
 								networkingv1.HTTPIngressPath{
-									Path: fmt.Sprintf("/github/%s", settings.AppName),
+									Path:     fmt.Sprintf("/github/%s", settings.AppName),
+									PathType: &pathTypeImplementationSpecific,
 									Backend: networkingv1.IngressBackend{
 										Service: &networkingv1.IngressServiceBackend{
 											Name: fmt.Sprintf("oauth2-proxy-%s-%s-%s", c.Env.Provider, settings.GitHub.Organization, settings.AppName),

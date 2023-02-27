@@ -39,7 +39,7 @@ How to restrict my service?
 ## Example: `supersecret` app
 ### Fill annotations, and host.
 ```yaml
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1
 kind: Ingress
 metadata:
   name: supersecret
@@ -64,9 +64,12 @@ spec:
     http:
       paths:
       - path: /
+        pathType: ImplementationSpecific
         backend:
-          serviceName: supersecret
-          servicePort: 80
+          service:
+            name: supersecret
+            port:
+              number: 80
 ```
 
 ## Tada! 🎉

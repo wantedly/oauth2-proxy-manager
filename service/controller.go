@@ -313,7 +313,7 @@ func (c *Controller) applyDeployment(ctx context.Context, settings *models.Servi
 					Containers: []apiv1.Container{
 						apiv1.Container{
 							Name:  "oauth2-proxy",
-							Image: "quay.io/oauth2-proxy/oauth2-proxy:v7.4.0",
+							Image: "quay.io/oauth2-proxy/oauth2-proxy:v7.2.1",
 							Args: []string{
 								"--http-address=0.0.0.0:4180",
 								fmt.Sprintf("--cookie-domain=%s", c.Env.CookieDomain),

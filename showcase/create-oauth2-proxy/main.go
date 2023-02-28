@@ -250,7 +250,7 @@ func (o *OAuth2Proxy) applySecret(ctx context.Context) {
 		},
 		Type: apiv1.SecretTypeOpaque,
 		StringData: map[string]string{
-			fmt.Sprintf("%s-%s-%s-cookie-secret", o.Env.Provider, o.Settings.GitHub.Organization, o.Settings.AppName): "PLEASERANDOM",
+			fmt.Sprintf("%s-%s-%s-cookie-secret", o.Env.Provider, o.Settings.GitHub.Organization, o.Settings.AppName): "_RANDOM_STR_16_OR_24_OR_32_BYTE_",
 			"client-secret": o.Env.ClientSecret,
 			"client-id":     o.Env.ClientID,
 		},
@@ -330,7 +330,7 @@ func (o *OAuth2Proxy) applyDeployment(ctx context.Context) {
 					Containers: []apiv1.Container{
 						apiv1.Container{
 							Name:  "oauth2-proxy",
-							Image: "quay.io/oauth2-proxy/oauth2-proxy:v7.4.0",
+							Image: "quay.io/oauth2-proxy/oauth2-proxy:v7.2.1",
 							Args: []string{
 								"--http-address=0.0.0.0:4180",
 								fmt.Sprintf("--cookie-domain=%s", o.Env.CookieDomain),

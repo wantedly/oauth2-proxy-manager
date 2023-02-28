@@ -221,7 +221,7 @@ func (c *Controller) applySecret(ctx context.Context, settings *models.ServiceSe
 			settings.GitHub.Organization+
 			strings.Join(settings.GitHub.Teams, "")+
 			settings.AppName+c.Env.CookieSalt,
-	)))
+	)))[0:32]
 	secret := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName),

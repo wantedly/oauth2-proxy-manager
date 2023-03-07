@@ -221,7 +221,7 @@ func (c *Controller) applySecret(ctx context.Context, settings *models.ServiceSe
 			settings.GitHub.Organization+
 			strings.Join(settings.GitHub.Teams, "")+
 			settings.AppName+c.Env.CookieSalt,
-	)))
+	)))[0:32]
 	secret := &apiv1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("oauth2-proxy-github-%s-%s", settings.GitHub.Organization, settings.AppName),
@@ -313,7 +313,7 @@ func (c *Controller) applyDeployment(ctx context.Context, settings *models.Servi
 					Containers: []apiv1.Container{
 						apiv1.Container{
 							Name:  "oauth2-proxy",
-							Image: "quay.io/pusher/oauth2_proxy:v3.2.0",
+							Image: "quay.io/oauth2-proxy/oauth2-proxy:v7.2.1",
 							Args: []string{
 								"--http-address=0.0.0.0:4180",
 								fmt.Sprintf("--cookie-domain=%s", c.Env.CookieDomain),

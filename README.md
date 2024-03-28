@@ -45,9 +45,6 @@ metadata:
   name: supersecret
   namespace: supersecret
   annotations:
-    # must be use ingress-nginx.
-    kubernetes.io/ingress.class: nginx
-
     # https://auth.example.com/<PROVIDER>/<APP_NAME>/.....
     nginx.ingress.kubernetes.io/auth-signin: https://auth.example.com/github/supersecret/start?rd=https://$host$request_uri$is_args$args
     nginx.ingress.kubernetes.io/auth-url: https://auth.example.com/github/supersecret/auth
@@ -59,6 +56,8 @@ metadata:
     oauth2-proxy-manager.k8s.io/github-org: "example-corp"
     oauth2-proxy-manager.k8s.io/github-teams: "administrator"
 spec:
+  # must be use ingress-nginx.
+  ingressClassName: ingress-nginx
   rules:
   - host: "supersecret.example.com" # hosts must be provide
     http:

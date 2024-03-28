@@ -14,6 +14,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	"k8s.io/utils/ptr"
 
 	"github.com/sirupsen/logrus"
 	"github.com/wantedly/oauth2-proxy-manager/models"
@@ -140,11 +141,9 @@ func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceS
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "oauth2-proxy",
 			Namespace: "oauth2-proxy",
-			Annotations: map[string]string{
-				"kubernetes.io/ingress.class": "nginx",
-			},
 		},
 		Spec: networkingv1.IngressSpec{
+			IngressClassName: ptr.To("nginx"),
 			Rules: []networkingv1.IngressRule{
 				networkingv1.IngressRule{
 					Host: c.Env.Domain,
@@ -172,7 +171,7 @@ func (c *Controller) applyIngress(ctx context.Context, settings *models.ServiceS
 	}
 
 	if len(c.Ingress.IngressClass) != 0 {
-		ingress.Annotations["kubernetes.io/ingress.class"] = c.Ingress.IngressClass
+		ingress.Spec.IngressClassName = &c.Ingress.IngressClass
 	}
 
 	if len(c.Ingress.TLSHosts) != 0 && len(c.Ingress.TLSSecretName) != 0 {

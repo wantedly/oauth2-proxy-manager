@@ -63,8 +63,13 @@ func main() {
 		AddFunc: func(obj interface{}) {
 			key, err := cache.MetaNamespaceKeyFunc(obj)
 			if err == nil {
-				meta := obj.(*networkingv1.Ingress).ObjectMeta
+				ing := obj.(*networkingv1.Ingress)
+				meta := ing.ObjectMeta
 				logrus.Infof("[Informer] Added Ingress %s", key)
+
+				if !shouldPerform(ing) {
+					return
+				}
 
 				settings, err := parseAnnotations(meta)
 				if err == nil {
@@ -76,8 +81,13 @@ func main() {
 			key, err := cache.MetaNamespaceKeyFunc(new)
 
 			if err == nil {
-				meta := new.(*networkingv1.Ingress).ObjectMeta
+				ing := new.(*networkingv1.Ingress)
+				meta := ing.ObjectMeta
 				logrus.Infof("[Informer] Update Ingress %s", key)
+
+				if !shouldPerform(ing) {
+					return
+				}
 
 				settings, err := parseAnnotations(meta)
 				if err == nil {
@@ -88,8 +98,13 @@ func main() {
 		DeleteFunc: func(obj interface{}) {
 			key, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
 			if err == nil {
-				meta := obj.(*networkingv1.Ingress).ObjectMeta
+				ing := obj.(*networkingv1.Ingress)
+				meta := ing.ObjectMeta
 				logrus.Infof("[Informer] Delete Ingress: %s", key)
+
+				if !shouldPerform(ing) {
+					return
+				}
 
 				settings, err := parseAnnotations(meta)
 				if err == nil {
@@ -108,15 +123,25 @@ func main() {
 	select {}
 }
 
+func shouldPerform(ing *networkingv1.Ingress) bool {
+	if ing == nil {
+		logrus.Info("ingress is nil. skip.")
+		return false
+	}
+	if ing.Spec.IngressClassName == nil {
+		logrus.Info("ingress class is not found. skip.")
+		return false
+	}
+	name := *ing.Spec.IngressClassName
+	if name != "nginx" && name != "ingress-nginx" {
+		logrus.Infof("ingress class is not `nginx` or `ingress-nginx` but %q. skip.", name)
+		return false
+	}
+	return true
+}
+
 func parseAnnotations(meta metav1.ObjectMeta) (*models.ServiceSettings, error) {
 	// Check Annotations ---
-	if _, ok := meta.Annotations["kubernetes.io/ingress.class"]; !ok {
-		return nil, errors.New("ingress.class not found. skip.")
-	} else if meta.Annotations["kubernetes.io/ingress.class"] != "nginx" {
-		// or ingress.class is "nginx" ?
-		return nil, errors.New("ingress.class is not nginx. skip.")
-	}
-
 	if _, ok := meta.Annotations["nginx.ingress.kubernetes.io/auth-url"]; !ok {
 		return nil, errors.New("auth-url not found. skip.")
 	}
@@ -134,11 +159,10 @@ func parseAnnotations(meta metav1.ObjectMeta) (*models.ServiceSettings, error) {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"ingress.class": meta.Annotations["kubernetes.io/ingress.class"],
-		"auth-url":      meta.Annotations["nginx.ingress.kubernetes.io/auth-url"],
-		"auth-signin":   meta.Annotations["nginx.ingress.kubernetes.io/auth-signin"],
-		"github-org":    meta.Annotations["oauth2-proxy-manager.lunasys.dev/github-org"],
-		"github-teams":  meta.Annotations["oauth2-proxy-manager.lunasys.dev/github-teams"],
+		"auth-url":     meta.Annotations["nginx.ingress.kubernetes.io/auth-url"],
+		"auth-signin":  meta.Annotations["nginx.ingress.kubernetes.io/auth-signin"],
+		"github-org":   meta.Annotations["oauth2-proxy-manager.lunasys.dev/github-org"],
+		"github-teams": meta.Annotations["oauth2-proxy-manager.lunasys.dev/github-teams"],
 	}).Debug("[ParseAnnotations]")
 
 	settings := &models.ServiceSettings{
